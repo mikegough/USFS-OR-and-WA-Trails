@@ -1,3 +1,10 @@
+########################################################################################################################
+# Author: Mike Gough
+# Date Created: 07/26/2021
+# Description: This script was used to create integer fields from text based fields in the USFS trails dataset so that
+# those fields can be used in EEMS.
+########################################################################################################################
+
 import arcpy
 
 input_fc = r"P:\Projects3\USFS_OR_and_WA_Trails_2020_mike_gough\Tasks\EEMS_Modeling_Trail_Specific\Data\Intermediate\Reporting_Units.gdb\DTC_Reporting_Units_Trails_Intersect_270m_v2_0_0"
