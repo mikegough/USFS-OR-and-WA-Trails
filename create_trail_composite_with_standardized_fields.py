@@ -1,3 +1,9 @@
+########################################################################################################################
+# Author: Mike Gough
+# Date Created: 09/12/2022
+# Description: This script creates a common set of fields for the DTC trails composite and populates
+# Those fields based on information contained in the source data fields.
+########################################################################################################################
 import arcpy
 import os 
 arcpy.env.overwriteOutput = True
@@ -16,14 +22,14 @@ add_composite_fields = True
 composite_fields_to_add = [
     ["original_oid",  "TEXT"],
     ["original_id",  "TEXT"],
-    ["trail_name",  "TEXT"],
-    ["trail_ownership",  "TEXT"],
-    ["trail_surface",  "TEXT"],
-    ["trail_length_miles", "TEXT"],
-    ["trail_width_ft", "TEXT"],
-    ["trail_grade", "TEXT"],
-    ["trail_type", "TEXT"],
-    ["trail_status", "TEXT"],
+    ["name",  "TEXT"],
+    ["ownership",  "TEXT"],
+    ["surface",  "TEXT"],
+    ["length_miles", "TEXT"],
+    ["width_ft", "TEXT"],
+    ["grade", "TEXT"],
+    ["type", "TEXT"],
+    ["status", "TEXT"],
     ["hiker", "SHORT"],
     ["biker", "SHORT"],
     ["pack_saddle", "SHORT"],
@@ -52,7 +58,6 @@ composite_field_names = [field[0] + "_c" for field in composite_fields_to_add]
 #original_field_names = [field for field in all_field_names if field not in composite_field_names]
 
 
-
 with arcpy.da.UpdateCursor(input_fc_copy, all_field_names) as uc:
     f = all_field_names  # for readability_below
     for row in uc:
@@ -65,21 +70,21 @@ with arcpy.da.UpdateCursor(input_fc_copy, all_field_names) as uc:
             # Original OID 
             row[f.index("original_oid_c")] = str(row[f.index("USFS_ORIG_OID")])
             # Trail Name 
-            row[f.index("trail_name_c")] = row[f.index("TRAIL_NAME")]
+            row[f.index("name_c")] = row[f.index("TRAIL_NAME")]
             # Trail Ownership 
-            row[f.index("trail_ownership_c")] = "USFS"
+            row[f.index("ownership_c")] = "USFS"
             # Trail Surface 
-            row[f.index("trail_surface_c")] = row[f.index("TRAIL_SURFACE")]
+            row[f.index("surface_c")] = row[f.index("TRAIL_SURFACE")]
             # Trail Length 
-            row[f.index("trail_length_miles_c")] = row[f.index("SEGMENT_LENGTH")]
+            row[f.index("length_miles_c")] = row[f.index("SEGMENT_LENGTH")]
             # Trail Width
-            row[f.index("trail_width_ft_c")] = row[f.index("TYPICAL_TREAD_WIDTH")]
+            row[f.index("width_ft_c")] = row[f.index("TYPICAL_TREAD_WIDTH")]
             # Trail Grade 
-            row[f.index("trail_grade_c")] = row[f.index("TYPICAL_TRAIL_GRADE")]
+            row[f.index("grade_c")] = row[f.index("TYPICAL_TRAIL_GRADE")]
             # Trail Type 
-            row[f.index("trail_type_c")] = row[f.index("TRAIL_TYPE")]
+            row[f.index("type_c")] = row[f.index("TRAIL_TYPE")]
             # Trail Status
-            row[f.index("trail_status_c")] = "Open"
+            row[f.index("status_c")] = "Open"
             # Hiker 
             if row[f.index("HIKER_PEDESTRIAN_MANAGED")]:
                 row[f.index("hiker_c")] = 1
@@ -120,8 +125,7 @@ with arcpy.da.UpdateCursor(input_fc_copy, all_field_names) as uc:
                 row[f.index("accessibility_status_c")] = 1
             else:
                 row[f.index("accessibility_status_c")] = 0
-                
-            # National Trail Designation    
+            # National Trail Designation
             if row[f.index("NATIONAL_TRAIL_DESIGNATION")] in [2, 3]:
                 row[f.index("national_trail_designation_c")] = 1 
             else:
@@ -134,32 +138,32 @@ with arcpy.da.UpdateCursor(input_fc_copy, all_field_names) as uc:
             # Original OID 
             row[f.index("original_oid_c")] = str(row[f.index("USGS_ORIG_OID")])
             # Trail Name 
-            row[f.index("trail_name_c")] = row[f.index("NAME")]
+            row[f.index("name_c")] = row[f.index("NAME")]
             # Trail Ownership 
             if "Cline Butte" in row[f.index("NAME")] or "Connector" in row[f.index("NAME")]: 
-                row[f.index("trail_ownership_c")] = "BLM"  # Source: https://www.mtbproject.com/trail/7001860/cline-butte-3-downhill
+                row[f.index("ownership_c")] = "BLM"  # Source: https://www.mtbproject.com/trail/7001860/cline-butte-3-downhill
             elif row[f.index("NAME")] == "Dry Canyon Trail": 
-                row[f.index("trail_ownership_c")] = "City of Redmond"  # Source: https://www.redmondoregon.gov/Home/Components/FacilityDirectory/FacilityDirectory/24/2751
+                row[f.index("ownership_c")] = "City of Redmond"  # Source: https://www.redmondoregon.gov/Home/Components/FacilityDirectory/FacilityDirectory/24/2751
             elif row[f.index("NAME")] == "Radlands Spur": 
-                row[f.index("trail_ownership_c")] = "Deschutes County"  # Source: https://www.raprd.org/radlands
+                row[f.index("ownership_c")] = "Deschutes County"  # Source: https://www.raprd.org/radlands
             # Trail Surface
-            row[f.index("trail_surface_c")] = ""
+            row[f.index("surface_c")] = ""
             # Trail Length
-            row[f.index("trail_length_miles_c")] = float(row[f.index("Shape_Length")]) * 0.0006214
+            row[f.index("length_miles_c")] = float(row[f.index("Shape_Length")]) * 0.0006214
             row[f.index("notes_c")] = ' | '.join(filter(None, [row[f.index("notes_c")], 'Trail Length is based on meters to miles conversion of the SHAPE_Length field']))
             # Trail Width
-            row[f.index("trail_width_ft_c")] = ""
+            row[f.index("width_ft_c")] = ""
             # Trail Grade 
-            row[f.index("trail_grade_c")] = ""
+            row[f.index("grade_c")] = ""
             # Trail Type
             if row[f.index("FCODE")] == 20602:
-                row[f.index("trail_type_c")] = "TERRA"
+                row[f.index("type_c")] = "TERRA"
             elif row[f.index("FCODE")] == 20606:
-                    row[f.index("trail_type_c")] = "SNOW"
+                    row[f.index("type_c")] = "SNOW"
             elif row[f.index("FCODE")] == 20604:
-                row[f.index("trail_type_c")] = "WATER"
+                row[f.index("type_c")] = "WATER"
             # Trail Status
-            row[f.index("trail_status_c")] = "Open"
+            row[f.index("status_c")] = "Open"
             # Hiker
             row[f.index("hiker_c")] = 1
             # Biker
@@ -195,28 +199,28 @@ with arcpy.da.UpdateCursor(input_fc_copy, all_field_names) as uc:
             # Original OID 
             row[f.index("original_oid_c")] = str(row[f.index("CITY_OF_BEND_ORIG_OID")])
             # Trail Name
-            row[f.index("trail_name_c")] = row[f.index("TRAIL_NAME")]
+            row[f.index("name_c")] = row[f.index("TRAIL_NAME")]
             # Trail Ownership 
-            row[f.index("trail_ownership_c")] = row[f.index("Ownership")]
+            row[f.index("ownership_c")] = row[f.index("Ownership")]
             # Trail Surface
-            row[f.index("trail_surface_c")] = row[f.index("Surface_Ma")]
+            row[f.index("surface_c")] = row[f.index("Surface_Ma")]
             # Trail Length
-            row[f.index("trail_length_miles_c")] = round(float(row[f.index("LENGTH")]), 3)
+            row[f.index("length_miles_c")] = round(float(row[f.index("LENGTH")]), 3)
             # Trail Width
-            row[f.index("trail_width_ft_c")] = ""
+            row[f.index("width_ft_c")] = ""
             # Trail Grade
-            row[f.index("trail_grade_c")] = ""
+            row[f.index("grade_c")] = ""
             # Trail Type 
             if row[f.index("Type")] != "" and row[f.index("Type")] != " ":
-                row[f.index("trail_type_c")] = "TERRA" + "(" + row[f.index("Type")] + ")"
+                row[f.index("type_c")] = "TERRA" + "(" + row[f.index("Type")] + ")"
             else: 
-                row[f.index("trail_type_c")] = "TERRA" 
+                row[f.index("type_c")] = "TERRA"
                 row[f.index("notes_c")] = ' | '.join(filter(None, [row[f.index("notes_c")], 'Planned trails have Null values in the type field and are assumed to be "TERRA" trails.']))
             # Trail Status
             if "Planned" in row[f.index("Status")]:
-                row[f.index("trail_status_c")] = "Planned"
+                row[f.index("status_c")] = "Planned"
             else:
-                row[f.index("trail_status_c")] = "Open"
+                row[f.index("status_c")] = "Open"
             # Hiker    
             row[f.index("hiker_c")] = 1
             row[f.index("notes_c")] = ' | '.join(filter(None, [row[f.index("notes_c")], 'All Bend trails are assumed to be Hiker friendly.']))
@@ -250,24 +254,24 @@ with arcpy.da.UpdateCursor(input_fc_copy, all_field_names) as uc:
             # Original OID 
             row[f.index("original_oid_c")] = str(row[f.index("BLM_ORIG_OID")])
             # Trail Name
-            row[f.index("trail_name_c")] = row[f.index("TRAILNAME")]
+            row[f.index("name_c")] = row[f.index("TRAILNAME")]
             # Trail Ownership 
-            row[f.index("trail_ownership_c")] = row[f.index("Ownership")]
+            row[f.index("ownership_c")] = row[f.index("Ownership")]
             # Trail Surface
-            row[f.index("trail_surface_c")] = row[f.index("SURFACETYP")]
+            row[f.index("surface_c")] = row[f.index("SURFACETYP")]
             # Trail Length
-            row[f.index("trail_length_miles_c")] = round(float(row[f.index("TOTALMILES")]), 3)
+            row[f.index("length_miles_c")] = round(float(row[f.index("TOTALMILES")]), 3)
             # Trail Width
-            row[f.index("trail_width_ft_c")] = row[f.index("AVGWIDTH")]
+            row[f.index("width_ft_c")] = row[f.index("AVGWIDTH")]
             # Trail Grade
-            row[f.index("trail_grade_c")] = ""
+            row[f.index("grade_c")] = ""
             # Trail Type
             if row[f.index("TRAILUSESN")] in ["NOSNOW", "UNK"]:
-                row[f.index("trail_type_c")] = "TERRA"
+                row[f.index("type_c")] = "TERRA"
             else:
-                row[f.index("trail_type_c")] = "SNOW"
+                row[f.index("type_c")] = "SNOW"
             # Trail Status 
-            row[f.index("trail_status_c")] = row[f.index("TRLCLOSURE")]
+            row[f.index("status_c")] = row[f.index("TRLCLOSURE")]
             # Hiker
             if "Hiking" in row[f.index("TRAILUSE")]:
                 row[f.index("hiker_c")] = 1
@@ -311,28 +315,28 @@ with arcpy.da.UpdateCursor(input_fc_copy, all_field_names) as uc:
             # Original OID
             row[f.index("original_oid_c")] = str(row[f.index("STATE_PARKS_ORIG_OID")])
             # Trail Name
-            row[f.index("trail_name_c")] = row[f.index("TRAIL_NAME")]
+            row[f.index("name_c")] = row[f.index("TRAIL_NAME")]
             # Trail Ownership 
-            row[f.index("trail_ownership_c")] = "State Parks"
+            row[f.index("ownership_c")] = "State Parks"
             # Trail Surface
             if row[f.index("SURFACE_CLASS")] == 0 or not row[f.index("SURFACE_CLASS")]:
-                row[f.index("trail_surface_c")] = "Unknown"
+                row[f.index("surface_c")] = "Unknown"
             elif row[f.index("SURFACE_CLASS")] == 1:
-                row[f.index("trail_surface_c")] = "Hard"
+                row[f.index("surface_c")] = "Hard"
             elif row[f.index("SURFACE_CLASS")] == 2:
-                row[f.index("trail_surface_c")] = "Soft" 
+                row[f.index("surface_c")] = "Soft"
             # Trail Length
-            row[f.index("trail_length_miles_c")] = round(float(row[f.index("Shape_Length")]) * 0.0006214, 3)
+            row[f.index("length_miles_c")] = round(float(row[f.index("Shape_Length")]) * 0.0006214, 3)
             row[f.index("notes_c")] = ' | '.join(filter(None, [row[f.index("notes_c")], 'Trail Length is based on meters to miles conversion of the SHAPE_Length field']))
             # Trail Width
-            row[f.index("trail_width_ft_c")] = str(row[f.index("WIDTH")])
+            row[f.index("width_ft_c")] = str(row[f.index("WIDTH")])
             # Trail Grade
-            row[f.index("trail_grade_c")] = ""
+            row[f.index("grade_c")] = ""
             # Trail Type
-            row[f.index("trail_type_c")] = "TERRA"
+            row[f.index("type_c")] = "TERRA"
             row[f.index("notes_c")] = ' | '.join(filter(None, [row[f.index("notes_c")], 'No information in the attribute table to indicate whether a trail is TERRA or SNOW. Assuming TERRA for state park trails.']))
             # Trail Status 
-            row[f.index("trail_status_c")] = "Open"
+            row[f.index("status_c")] = "Open"
             # Hiker
             if row[f.index("PRIMARY_USE")] in [6, 7, 8, 11, 12]:
                 row[f.index("hiker_c")] = 1
@@ -389,13 +393,14 @@ final_output_fields = [composite_field.split("_c")[0] for composite_field in com
 
 output_fc_pre_dissolve = intermediate_ws + os.sep + output_fc.split(os.sep)[-1] + "_Pre_Dissolve"
 
+
 def copy(in_fc, out_fc, keep_fields, where=''):
-    
-    """ 
-    Creates the a pre-dissolved version of the output feature class in the intermediate workspace 
-    containing just the composite fields 
+
     """
-    
+    Creates the a pre-dissolved version of the output feature class in the intermediate workspace
+    containing just the composite fields
+    """
+
     fmap = arcpy.FieldMappings()
     fmap.addTable(in_fc)
 
@@ -422,9 +427,8 @@ def copy(in_fc, out_fc, keep_fields, where=''):
 def dissolve(in_fc, out_fields, out_fc):
     
     """ 
-    Dissolves the trails feature class that where the values in all the composite fields are the same in order to create 
-    the final output. 
-    Since the ID fields may be different, take the first ID value from the dissolved lines. 
+    Dissolves the trails feature class where the values in all the composite fields are the same in order to create
+    the final output. Since the ID fields may be different, take the first ID value when trails are dissolved.
     """
     
     id_fields = ["composite_id", "original_id", "original_oid"]
@@ -446,4 +450,3 @@ def dissolve(in_fc, out_fields, out_fc):
 
 copy(input_fc_copy, output_fc_pre_dissolve, composite_fields)
 dissolve(output_fc_pre_dissolve, final_output_fields, output_fc)
-
