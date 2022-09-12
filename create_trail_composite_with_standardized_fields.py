@@ -2,7 +2,7 @@
 # Author: Mike Gough
 # Date Created: 09/12/2022
 # Description: This script creates a common set of fields for the DTC trails composite and populates
-# Those fields based on information contained in the source data fields.
+# those fields based on information contained in the source data fields.
 ########################################################################################################################
 import arcpy
 import os 
