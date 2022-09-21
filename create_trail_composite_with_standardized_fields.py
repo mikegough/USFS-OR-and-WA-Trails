@@ -9,7 +9,7 @@ import os
 arcpy.env.overwriteOutput = True
 
 input_fc = r"P:\Projects3\USFS_OR_and_WA_Trails_2020_mike_gough\Tasks\EEMS_Modeling_Trail_Specific\Data\Intermediate\Trails.gdb\CBI_DTC_Trails_Composite_Pre_Field_Standardization"
-output_fc = r"P:\Projects3\USFS_OR_and_WA_Trails_2020_mike_gough\Tasks\EEMS_Modeling_Trail_Specific\Data\Intermediate\Reporting_Units.gdb\CBI_DTC_Trails_Composite_v1_1"
+output_fc = r"P:\Projects3\USFS_OR_and_WA_Trails_2020_mike_gough\Tasks\EEMS_Modeling_Trail_Specific\Data\Intermediate\Trails_Composite.gdb\CBI_DTC_Trails_Composite_v1_3"
 
 intermediate_ws = r"P:\Projects3\USFS_OR_and_WA_Trails_2020_mike_gough\Tasks\EEMS_Modeling_Trail_Specific\Data\Intermediate\Trails.gdb"
 
@@ -37,8 +37,9 @@ composite_fields_to_add = [
     ["atv", "SHORT"],
     ["motorcycle", "SHORT"],
     ["motorized", "SHORT"],
-    ["accessibility_status", "TEXT"],
+    ["accessibility_status", "SHORT"],
     ["national_trail_designation", "SHORT"],
+    ["special_mgmt_area", "TEXT"],
     ["notes", "TEXT", 10000],
 ]
 
@@ -116,7 +117,7 @@ with arcpy.da.UpdateCursor(input_fc_copy, all_field_names) as uc:
             else:
                 row[f.index("motorcycle_c")] = 0
             # Motorized 
-            if row[f.index("TERRA_MOTORIZED")]:
+            if row[f.index("TERRA_MOTORIZED")] == 'Y':
                 row[f.index("motorized_c")] = 1
             else:
                 row[f.index("motorized_c")] = 0
@@ -129,7 +130,10 @@ with arcpy.da.UpdateCursor(input_fc_copy, all_field_names) as uc:
             if row[f.index("NATIONAL_TRAIL_DESIGNATION")] in [2, 3]:
                 row[f.index("national_trail_designation_c")] = 1 
             else:
-                row[f.index("national_trail_designation_c")] = 0 
+                row[f.index("national_trail_designation_c")] = 0
+            # Special Mgmt Area
+            row[f.index("special_mgmt_area_c")] = row[f.index("SPECIAL_MGMT_AREA")]
+
 
         # USGS
         elif row[f.index("original_trails_dataset_source")] == "USGS":
@@ -185,12 +189,14 @@ with arcpy.da.UpdateCursor(input_fc_copy, all_field_names) as uc:
             row[f.index("motorized_c")] = 0
             row[f.index("notes_c")] = ' | '.join(filter(None, [row[f.index("notes_c")], 'Motorized vehicles are believed to be prohibited on the remaining USGS trails in the Cline Butte/Maston Trail System and Radlands']))
             # Accessibility Status
-            row[f.index("accessibility_status_c")] = ""
+            row[f.index("accessibility_status_c")] = 0
             # National Trail Designation
             if "national" in row[f.index("SOURCE_DATADESC")].lower():
                 row[f.index("national_trail_designation_c")] = 1
             else:
                 row[f.index("national_trail_designation_c")] = 0
+            # Special Mgmt Area
+            row[f.index("special_mgmt_area_c")] = ""
 
         # City of Bend
         elif row[f.index("original_trails_dataset_source")] == "City of Bend":
@@ -242,10 +248,11 @@ with arcpy.da.UpdateCursor(input_fc_copy, all_field_names) as uc:
             row[f.index("motorized_c")] = 0
             row[f.index("notes_c")] = ' | '.join(filter(None, [row[f.index("notes_c")], 'Motorized vehicles believed to be prohibited on all trails in Bend including multi-use (bendoregon.gov)']))
             # Accessibility Status
-            row[f.index("accessibility_status_c")] = ""
+            row[f.index("accessibility_status_c")] = 0
             # National Trail Designation
             row[f.index("national_trail_designation_c")] = 0
-
+            # Special Mgmt Area
+            row[f.index("special_mgmt_area_c")] = ""
 
         # BLM 
         elif row[f.index("original_trails_dataset_source")] == "BLM":
@@ -296,7 +303,7 @@ with arcpy.da.UpdateCursor(input_fc_copy, all_field_names) as uc:
             # Motorized
             row[f.index("motorized_c")] = 0
             # Accessibility Status
-            row[f.index("accessibility_status_c")] = ""
+            row[f.index("accessibility_status_c")] = 0
             # Accessibility Status
             if "Accessible" in row[f.index("COMMENTS")] or "ADA" in row[f.index("COMMENTS")]:
                 row[f.index("accessibility_status_c")] = 1
@@ -307,6 +314,8 @@ with arcpy.da.UpdateCursor(input_fc_copy, all_field_names) as uc:
                 row[f.index("national_trail_designation_c")] = 1
             else:
                 row[f.index("national_trail_designation_c")] = 0
+            # Special Mgmt Area
+            row[f.index("special_mgmt_area_c")] = ""
 
         # State Parks
         elif row[f.index("original_trails_dataset_source")] == "State Parks":
@@ -377,9 +386,11 @@ with arcpy.da.UpdateCursor(input_fc_copy, all_field_names) as uc:
             elif row[f.index("ADA")] == "No":
                 row[f.index("accessibility_status_c")] = 0
             else:
-                row[f.index("accessibility_status_c")] = ""
+                row[f.index("accessibility_status_c")] = 0
             # National Trail Designation
             row[f.index("national_trail_designation_c")] = 0
+            # Special Mgmt Area
+            row[f.index("special_mgmt_area_c")] = ""
 
         try:
             uc.updateRow(row)

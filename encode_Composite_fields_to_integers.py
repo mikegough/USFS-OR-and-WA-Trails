@@ -7,7 +7,7 @@
 
 import arcpy
 
-input_fc = r"P:\Projects3\USFS_OR_and_WA_Trails_2020_mike_gough\Tasks\EEMS_Modeling_Trail_Specific\Data\Intermediate\Reporting_Units.gdb"
+input_fc = r"P:\Projects3\USFS_OR_and_WA_Trails_2020_mike_gough\Tasks\EEMS_Modeling_Trail_Specific\Data\Intermediate\Reporting_Units.gdb\DTC_Reporting_Units_Trails_Composite_Intersect_270m_v4_0_1"
 
 
 def calculate_allowed_uses():
@@ -74,34 +74,8 @@ def calculate_integer_categories():
 
     int_fields_list = [
         {
-            "orig_field_name": "TRAIL_CLASS",
-            "int_field_name": "Trail_Class_Int",
-            "field_mapping": {
-                "1": 1,
-                "2": 2,
-                "3": 3,
-                "4": 4,
-                "5": 5,
-                "N": 6,
-                "NULL": 7,
-            },
-            "ignore": True,
-        },
-        {
-            "orig_field_name": "TERRA_MOTORIZED",
-            "int_field_name": "Terra_Motorized_Int",
-            "field_mapping": {
-                "NULL": 1,
-                None: 1,
-                "X": 2,
-                "N": 3,
-                "Y": 4,
-            },
-            "ignore": True,
-        },
-        {
-            "orig_field_name": "TRAIL_SURFACE",
-            "int_field_name": "Trail_Surface_Int",
+            "orig_field_name": "surface",
+            "int_field_name": "surface_int",
             "field_mapping": {
                 "IMPORTED COMPACTED MATERIAL": 1,
                 "NULL": 2,
@@ -109,24 +83,25 @@ def calculate_integer_categories():
                 "AC- ASPHALT": 4,
                 "NAT - NATIVE MATERIAL": 5,
                 "SNOW": 6,
+                "Soft": 7,
+                "Hard": 8,
+                "Natural Unimproved": 9,
+                "Bituminous": 10,
+                "Aggregate": 11,
+                "Grid Rolled": 12,
+                "Asphalt": 13,
+                "Natural": 14,
+                "Natural Surface": 15,
+                "Concrete": 16,
+                "Other": 17,
+                "Wood Deck": 18,
+                "Multi-use": 19,
+                "Trail": 20,
+                "Unknown": 21,
                 },
-            "ignore": False,
+                "ignore": False
         },
         {
-            "orig_field_name": "SURFACE_FIRMNESS",
-            "int_field_name": "Surface_Firmness_Int",
-            "field_mapping": {
-                "N/A": 1,
-                "NULL": 2,
-                "VS - VERY SOFT": 3,
-                "S - SOFT": 4,
-                "P - PAVED": 5,
-                "F - FIRM": 6,
-                "H - HARD": 7,
-            },
-            "ignore": True,
-    },
-    {
             "orig_field_name": "grade",
             "int_field_name": "grade_int",
             "field_mapping": {
@@ -142,32 +117,10 @@ def calculate_integer_categories():
                 "NULL": 10,
                 "N/A": 11,
             },
-            "ignore": False,
-    },
-        {
-            "orig_field_name": "ACCESSIBILITY_STATUS",
-            "int_field_name": "Accessibility_Status_Int",
-            "field_mapping": {
-                "NOT ACCESSIBLE": 1,
-                "NULL": 2,
-                "N/A": 3,
-                "ACCESSIBLE": 4,
-            },
-            "ignore": True,
+            "ignore": False
         },
         {
-            "orig_field_name": "NATIONAL_TRAIL_DESIGNATION",
-            "int_field_name": "National_Trail_Designation_int",
-            "field_mapping": {
-                "0": 0,
-                "1": 1,
-                "2": 2,
-                "3": 3,
-            },
-            "ignore": True,
-        },
-        {
-            "orig_field_name": "SPECIAL_MGMT_AREA",
+            "orig_field_name": "special_mgmt_area",
             "int_field_name": "special_mgmt_area_int",
             "field_mapping": {
                 "NM - NATIONAL MONUMENT": 1,
@@ -178,12 +131,12 @@ def calculate_integer_categories():
                 "NULL": 6,
                 "N/A": 7,
                 "NRA - NATIONAL RECREATION AREA": 8,
-                "WSR - RECREATION": 9,
+                "WSR - RECREATION": 9, # Trail segment is in a Recreation section of a Wild and Scenic River corridor
                 "URA - UNROADED AREA": 10,
                 "IRA - INVENTORIED ROADLESS AREA": 11,
                 "WSA - WILDERNESS STUDY AREA": 12,
             },
-            "ignore": False,
+            "ignore": False
         }
 
     ]
@@ -213,4 +166,19 @@ def calculate_integer_categories():
                         row[1] = null_integer_value
 
                     uc.updateRow(row)
+
+def duplicate_fields(fields, dup_string_to_tack_on="_2"):
+    for field in fields:
+        print ("Duplicating field: " + field)
+        original_field_name = field
+        duplicate_field = field + dup_string_to_tack_on
+        field_type = [f.type for f in arcpy.ListFields(input_fc, field)][0]
+        arcpy.AddField_management(input_fc, duplicate_field, field_type)
+        arcpy.CalculateField_management(input_fc, duplicate_field, "!" + original_field_name + "!", "PYTHON")
+
+
+#calculate_allowed_uses() # Not used for composite
+calculate_integer_categories()
+duplicate_fields(["surface_int", "special_mgmt_area_int", "hiker", "biker", "pack_saddle", "motorized"], "_2")
+duplicate_fields(["surface_int", "hiker", "biker", "motorized", "pack_saddle"], "_3")
 

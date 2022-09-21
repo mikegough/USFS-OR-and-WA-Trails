@@ -5,8 +5,10 @@ fc = r"\\loxodonta\gis\Source_Data\society\county\OR\Deschutes\Bend_Trails_From_
 fc = r"\\loxodonta\gis\Source_Data\transportation\state\OR\usgs_trails\TRAN_Oregon_State_GDB\TRAN_Oregon_State_GDB.gdb\Transportation\Trans_TrailSegment"
 fc = r"\\loxodonta\gis\Source_Data\transportation\national\forest_service_trails\USFS_National_Trails_Dataset_2021\S_USA.TrailNFS_Publish.gdb\TrailNFS_Publish"
 fc = r"\\loxodonta\gis\Source_Data\society\state\OR\OR_State_Parks_Trails\OPRD_Trails_forCons.gdb\OPRD_Trails_Export"
+fc = r"P:\Projects3\USFS_OR_and_WA_Trails_2020_mike_gough\Tasks\EEMS_Modeling_Trail_Specific\Data\Intermediate\Reporting_Units.gdb\DTC_Reporting_Units_Trails_Composite_Intersect_270m_v4_0_0"
 fields_to_ignore = []
 fields = [field.name for field in arcpy.ListFields(fc) if field.name not in fields_to_ignore]
+fields = ["surface"]
 for field in fields:
 	values = []
 	with arcpy.da.SearchCursor(fc, field) as sc: 
