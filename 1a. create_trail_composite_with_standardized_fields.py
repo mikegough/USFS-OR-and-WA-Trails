@@ -9,7 +9,7 @@ import os
 arcpy.env.overwriteOutput = True
 
 input_fc = r"P:\Projects3\USFS_OR_and_WA_Trails_2020_mike_gough\Tasks\EEMS_Modeling_Trail_Specific\Data\Intermediate\Trails.gdb\CBI_DTC_Trails_Composite_Pre_Field_Standardization"
-output_fc = r"P:\Projects3\USFS_OR_and_WA_Trails_2020_mike_gough\Tasks\EEMS_Modeling_Trail_Specific\Data\Intermediate\Trails_Composite.gdb\CBI_DTC_Trails_Composite_v1_3"
+output_fc = r"P:\Projects3\USFS_OR_and_WA_Trails_2020_mike_gough\Tasks\EEMS_Modeling_Trail_Specific\Data\Intermediate\Trails_Composite.gdb\CBI_DTC_Trails_Composite_v1_5"
 
 intermediate_ws = r"P:\Projects3\USFS_OR_and_WA_Trails_2020_mike_gough\Tasks\EEMS_Modeling_Trail_Specific\Data\Intermediate\Trails.gdb"
 
@@ -41,6 +41,11 @@ composite_fields_to_add = [
     ["national_trail_designation", "SHORT"],
     ["special_mgmt_area", "TEXT"],
     ["notes", "TEXT", 10000],
+]
+
+# These fields aren't calculated in this script, but we want to keep them as-is in the composite output
+input_fields_to_keep_as_is = [
+    "stream_crossing"
 ]
 
 if add_composite_fields:
@@ -138,60 +143,78 @@ with arcpy.da.UpdateCursor(input_fc_copy, all_field_names) as uc:
         # USGS
         elif row[f.index("original_trails_dataset_source")] == "USGS":
             # Original Trail ID 
-            row[f.index("original_id_c")] = str(row[f.index("PERMANENT_IDENTIFIER")])
+            row[f.index("original_id_c")] = str(row[f.index("permanentidentifier")])
             # Original OID 
             row[f.index("original_oid_c")] = str(row[f.index("USGS_ORIG_OID")])
             # Trail Name 
-            row[f.index("name_c")] = row[f.index("NAME")]
-            # Trail Ownership 
-            if "Cline Butte" in row[f.index("NAME")] or "Connector" in row[f.index("NAME")]: 
-                row[f.index("ownership_c")] = "BLM"  # Source: https://www.mtbproject.com/trail/7001860/cline-butte-3-downhill
-            elif row[f.index("NAME")] == "Dry Canyon Trail": 
-                row[f.index("ownership_c")] = "City of Redmond"  # Source: https://www.redmondoregon.gov/Home/Components/FacilityDirectory/FacilityDirectory/24/2751
-            elif row[f.index("NAME")] == "Radlands Spur": 
+            row[f.index("name_c")] = row[f.index("name")]
+            # Trail Ownership
+            if row[f.index("name")] == "Radlands Spur":
                 row[f.index("ownership_c")] = "Deschutes County"  # Source: https://www.raprd.org/radlands
+            else:
+                row[f.index("ownership_c")] = row[f.index("primarytrailmaintainer")]
             # Trail Surface
             row[f.index("surface_c")] = ""
             # Trail Length
-            row[f.index("length_miles_c")] = float(row[f.index("Shape_Length")]) * 0.0006214
-            row[f.index("notes_c")] = ' | '.join(filter(None, [row[f.index("notes_c")], 'Trail Length is based on meters to miles conversion of the SHAPE_Length field']))
+            row[f.index("length_miles_c")] = row[f.index("lengthmiles")]
             # Trail Width
             row[f.index("width_ft_c")] = ""
             # Trail Grade 
             row[f.index("grade_c")] = ""
             # Trail Type
-            if row[f.index("FCODE")] == 20602:
+            if row[f.index("trailtype")] == 'Standard/Terra Trail':
                 row[f.index("type_c")] = "TERRA"
-            elif row[f.index("FCODE")] == 20606:
-                    row[f.index("type_c")] = "SNOW"
-            elif row[f.index("FCODE")] == 20604:
+            elif row[f.index("trailtype")] == 'Snow Trail':
+                row[f.index("type_c")] = "SNOW"
+            elif row[f.index("trailtype")] == 'Water Trail':
                 row[f.index("type_c")] = "WATER"
             # Trail Status
-            row[f.index("status_c")] = "Open"
+            if row[f.index("name")]:
+                if "closed" in row[f.index("name")].lower():
+                    row[f.index("status_c")] = "Closed"
+                else:
+                    row[f.index("status_c")] = "Open"
+            else:
+                row[f.index("status_c")] = "Open"
             # Hiker
-            row[f.index("hiker_c")] = 1
+            if row[f.index("hikerpedestrian")] == "Y": #These are domain coded values. Attribute table says "Yes".
+                row[f.index("hiker_c")] = 1
+            else:
+                row[f.index("hiker_c")] = 0
             # Biker
-            row[f.index("biker_c")] = 1
-            row[f.index("notes_c")] = ' | '.join(filter(None, [row[f.index("notes_c")], 'The USGS trails in this dataset all originate from IMBA Recreational Equipment Inc and appear to all be hiker-biker allowed.']))
+            if row[f.index("bicycle")] == "Y":
+                row[f.index("biker_c")] = 1
+            else:
+                row[f.index("biker_c")] = 0
             # Pack & Saddle
-            if "Cline Butte" in row[f.index("NAME")]:
+            if row[f.index("packsaddle")] == "Y":
                 row[f.index("pack_saddle_c")] = 1
             else:
                 row[f.index("pack_saddle_c")] = 0
-            row[f.index("notes_c")] = ' | '.join(filter(None, [row[f.index("notes_c")], 'The Cline Butte trails are part of the Maston Trail system and also permit pack/saddle. https://www.blm.gov/visit/maston-trail-system']))
             # Four WD
-            row[f.index("four_wheel_drive_c")] = 0
+            if row[f.index("ohvover50inches")] == "Y":
+                row[f.index("four_wheel_drive_c")] = 1
+            else:
+                row[f.index("four_wheel_drive_c")] = 0
             # ATV
-            row[f.index("atv_c")] = 0
+            if row[f.index("atv")] == "Y":
+                row[f.index("atv_c")] = 1
+            else:
+                row[f.index("atv_c")] = 0
             # Motorcycle
-            row[f.index("motorcycle_c")] = 0
+            if row[f.index("motorcycle")] == "Y":
+                row[f.index("motorcycle_c")] = 1
+            else:
+                row[f.index("motorcycle_c")] = 0
             # Motorized
-            row[f.index("motorized_c")] = 0
-            row[f.index("notes_c")] = ' | '.join(filter(None, [row[f.index("notes_c")], 'Motorized vehicles are believed to be prohibited on the remaining USGS trails in the Cline Butte/Maston Trail System and Radlands']))
+            if row[f.index("ohvover50inches")] == "Y" or row[f.index("atv")] == "Y" or row[f.index("motorcycle")] == "Y":
+                row[f.index("motorized_c")] = 1
+            else:
+                row[f.index("motorized_c")] = 0
             # Accessibility Status
             row[f.index("accessibility_status_c")] = 0
             # National Trail Designation
-            if "national" in row[f.index("SOURCE_DATADESC")].lower():
+            if row[f.index("nationaltraildesignation")]:
                 row[f.index("national_trail_designation_c")] = 1
             else:
                 row[f.index("national_trail_designation_c")] = 0
@@ -211,7 +234,7 @@ with arcpy.da.UpdateCursor(input_fc_copy, all_field_names) as uc:
             # Trail Surface
             row[f.index("surface_c")] = row[f.index("Surface_Ma")]
             # Trail Length
-            row[f.index("length_miles_c")] = round(float(row[f.index("LENGTH")]), 3)
+            row[f.index("length_miles_c")] = round(float(row[f.index("Length")]), 3)
             # Trail Width
             row[f.index("width_ft_c")] = ""
             # Trail Grade
@@ -400,7 +423,6 @@ with arcpy.da.UpdateCursor(input_fc_copy, all_field_names) as uc:
             uc.updateRow(row)
 
 composite_fields = ["composite_id", "original_trails_dataset_source"] + composite_field_names
-final_output_fields = [composite_field.split("_c")[0] for composite_field in composite_fields]
 
 output_fc_pre_dissolve = intermediate_ws + os.sep + output_fc.split(os.sep)[-1] + "_Pre_Dissolve"
 
@@ -430,8 +452,13 @@ def copy(in_fc, out_fc, keep_fields, where=''):
     arcpy.conversion.FeatureClassToFeatureClass(in_fc, path, name, where, fmap)
     
     for field_name in keep_fields:
-        new_field_name = field_name.split("_c")[0]
-        arcpy.AlterField_management(out_fc, field_name, new_field_name)
+        if field_name not in input_fields_to_keep_as_is:
+            try:
+                new_field_name = field_name.split("_c")[0] # don't want to split "stream_crossing"..
+                arcpy.AlterField_management(out_fc, field_name, new_field_name)
+            except:
+                # Some fields we want to keep, but they aren't calculated and don't have a "_c"
+                print ("Failed to rename field: " + field_name)
 
     return out_fc
 
@@ -459,5 +486,12 @@ def dissolve(in_fc, out_fields, out_fc):
         arcpy.AlterField_management(out_fc, old_id_field_name, new_id_field_name)
 
 
-copy(input_fc_copy, output_fc_pre_dissolve, composite_fields)
+####### COPY with only fields wanting to keep ##########################################################################
+fields_to_keep_in_copy = composite_fields + input_fields_to_keep_as_is
+copy(input_fc_copy, output_fc_pre_dissolve, fields_to_keep_in_copy)
+
+####### DISSOLVE #######################################################################################################
+# Dissolving on all composite fields and "input_fields_to_keep as is" (e.g., stream_crossing).
+# Should be the same as the fields in the "fields_to_keep_in_copy" list, but may want to change it.
+final_output_fields = [composite_field.split("_c")[0] for composite_field in composite_fields] + input_fields_to_keep_as_is
 dissolve(output_fc_pre_dissolve, final_output_fields, output_fc)

@@ -7,67 +7,9 @@
 
 import arcpy
 
-input_fc = r"P:\Projects3\USFS_OR_and_WA_Trails_2020_mike_gough\Tasks\EEMS_Modeling_Trail_Specific\Data\Intermediate\Reporting_Units.gdb\DTC_Reporting_Units_Trails_Composite_Intersect_270m_v4_0_1"
+# Output from model 2. Prepare Reporting Units (Intersect with Landscape)
+input_fc = r"P:\Projects3\USFS_OR_and_WA_Trails_2020_mike_gough\Tasks\EEMS_Modeling_Trail_Specific\Data\Intermediate\Reporting_Units.gdb\DTC_Reporting_Units_Trails_Composite_Intersect_270m_v4_0_3"
 
-
-def calculate_allowed_uses():
-    
-    fields_to_add = ["hiker_pedestrian", "pack_and_saddle", "bicycle", "motorcycle", "atv", "FourWD_gt_50_inches"]
-
-    for field in fields_to_add:
-        arcpy.AddField_management(input_fc, field, "INTEGER")
-
-    fields_for_uc = ["ALLOWED_TERRA_USE"] + fields_to_add
-
-    with arcpy.da.UpdateCursor(input_fc, fields_for_uc) as uc:
-        
-        for row in uc:
-            
-            allowed_uses = row[0]
-            
-            if allowed_uses: 
-                # Hiker/Pedestrian 
-                if "1" in allowed_uses:
-                    row[1] = 1
-                else:
-                    row[1] = 0
-
-                # Pack and Saddle 
-                if "2" in allowed_uses:
-                    row[2] = 1
-                else:
-                    row[2] = 0
-
-                # Bicycle 
-                if "3" in allowed_uses:
-                    row[3] = 1
-                else:
-                    row[3] = 0
-                    
-                # Motorcycle 
-                if "4" in allowed_uses:
-                    row[4] = 1
-                else:
-                    row[4] = 0
-                    
-                #ATV
-                if "5" in allowed_uses:
-                    row[5] = 1
-                else:
-                    row[5] = 0
-                    
-                #4WD
-                if "6" in allowed_uses:
-                    row[6] = 1
-                else:
-                    row[6] = 0
-            else:
-                for field_index in range(1, 7):
-                    row[field_index] = 0
-
-            uc.updateRow(row)
-       
-        
 def calculate_integer_categories():
     
     null_integer_value = -999  
@@ -179,6 +121,6 @@ def duplicate_fields(fields, dup_string_to_tack_on="_2"):
 
 #calculate_allowed_uses() # Not used for composite
 calculate_integer_categories()
-duplicate_fields(["surface_int", "special_mgmt_area_int", "hiker", "biker", "pack_saddle", "motorized"], "_2")
+duplicate_fields(["surface_int", "hiker", "biker", "pack_saddle", "motorized", "stream_crossing"], "_2")
 duplicate_fields(["surface_int", "hiker", "biker", "motorized", "pack_saddle"], "_3")
 
