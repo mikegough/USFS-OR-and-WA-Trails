@@ -1,8 +1,8 @@
 ########################################################################################################################
 # Author: Mike Gough
-# Date Created: 07/26/2021
-# Description: This script was used to create integer fields from text based fields in the USFS trails dataset so that
-# those fields can be used in EEMS.
+# Date Created: 09/20/2022
+# Description: This script was used to create integer fields from text based fields in the composite trails dataset so
+# that those fields can be used in EEMS.
 ########################################################################################################################
 
 import arcpy
