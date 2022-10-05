@@ -1,8 +1,12 @@
 ########################################################################################################################
 # Author: Mike Gough
 # Date Created: 09/20/2022
-# Description: This script was used to create integer fields from text based fields in the composite trails dataset so
-# that those fields can be used in EEMS.
+# Description: This script adds additional fields needed for the EEMS model that we don't want to be in the
+# composite.
+# 1. Integer fields created out of string fields
+# 2. Duplicate fields needed more than once in the EEMS model
+# It should therefore be run on the composite dataset intersected with the landscape dataset.
+# created by the following model:  Combine Trail Specific and Landscape Models (vx)
 ########################################################################################################################
 
 import arcpy
@@ -10,7 +14,7 @@ import arcpy
 # Output from model 2. Prepare Reporting Units (Intersect with Landscape)
 input_fc = r"P:\Projects3\USFS_OR_and_WA_Trails_2020_mike_gough\Tasks\EEMS_Modeling_Trail_Specific\Data\Intermediate\Reporting_Units.gdb\DTC_Reporting_Units_Trails_Composite_Intersect_270m_v4_0_3"
 
-def calculate_integer_categories():
+def encode_string_fields_as_integers():
     
     null_integer_value = -999  
 
@@ -119,8 +123,7 @@ def duplicate_fields(fields, dup_string_to_tack_on="_2"):
         arcpy.CalculateField_management(input_fc, duplicate_field, "!" + original_field_name + "!", "PYTHON")
 
 
-#calculate_allowed_uses() # Not used for composite
-calculate_integer_categories()
+encode_string_fields_as_integers()
 duplicate_fields(["surface_int", "hiker", "biker", "pack_saddle", "motorized", "stream_crossing"], "_2")
 duplicate_fields(["surface_int", "hiker", "biker", "motorized", "pack_saddle"], "_3")
 
